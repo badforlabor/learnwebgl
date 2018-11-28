@@ -1,0 +1,120 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>一个三角形</title>
+</head>
+
+<body>
+    <canvas width="570" height="570" id="canvas"></canvas>
+
+    <script>
+
+        /*
+            绘制元素，其实就一步：告诉GPU，在哪里绘制元素（比如三角形）以及使用哪种管线绘制（操纵shader），然后GPU就会把元素绘制出来。
+            如果要细分绘制步骤，总共这几步：
+                1、准备元素：initBuffer
+                2、准备shader：initShader
+                3、绘制：drawScene
+            drawscene的过程可以简化为几个步骤：
+                1、清屏：比如，清除颜色，清除深度缓冲区等等
+                2、绘制元素（比如 gl.useProgram ... gl.drawElements）
+                    2-1、元素是啥？就是顶点数组。顶点数组需要提前发送给GPU，使用gl.bufferData函数
+                    2-2、绘制元素的时候，需要告知GPU元素的位置，也就是句柄(或者指针)，使用gl.createBuffer函数。所以正确流程是
+                            先获取句柄gl.CreateBuffer，然后再设置数据gl.bindBuffer, gl.bufferData
+                3、如果有多个元素，重复执行步骤2。（具体可以参考lession2）
+                
+        */
+        var canvas = document.getElementById('canvas');
+        var gl = canvas.getContext('webgl');
+
+        var vertexBuffer, indexBuffer, indices
+        var shaderProgram
+
+
+        function initBuffer() {
+            // uv坐标其实是[-1, 1]，（3D世界中，不是以像素为距离单位的，而是uv，uv的范围是[-1, 1]。具体为啥，可以查查资料
+            // 这里，我们居中绘制一个三角形
+            let vertices = [
+                -0.5, 0.5, 0.0,
+                -0.5, -0.5, 0.0,
+                0.5, -0.5, 0.0,
+            ]
+
+            vertexBuffer = gl.createBuffer()
+            gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer)
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW)
+            gl.bindBuffer(gl.ARRAY_BUFFER, null)
+
+            indices = [0, 1, 2]
+            indexBuffer = gl.createBuffer()
+            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer)
+            gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW)
+            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null)
+        }
+        function initShader() {
+            let compileShader = (src, type) => {
+                let shader = gl.createShader(type)
+                gl.shaderSource(shader, src)
+                gl.compileShader(shader)
+                return shader
+            }
+
+            var vertCode =
+                'attribute vec3 coordinates;' +
+
+                'void main(void) {' +
+                ' gl_Position = vec4(coordinates, 1.0);' +
+                '}';
+            var fragCode =
+                'void main(void) {' +
+                ' gl_FragColor = vec4(0.0, 0.0, 0.0, 0.1);' +
+                '}';
+            var vs = compileShader(vertCode, gl.VERTEX_SHADER)
+            var fs = compileShader(fragCode, gl.FRAGMENT_SHADER)
+
+            shaderProgram = gl.createProgram()
+            gl.attachShader(shaderProgram, vs)
+            gl.attachShader(shaderProgram, fs)
+            gl.linkProgram(shaderProgram)
+        }
+
+        function drawOne() {
+            gl.useProgram(shaderProgram)
+            gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer)
+            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer)
+            var coord = gl.getAttribLocation(shaderProgram, "coordinates")
+            gl.vertexAttribPointer(coord, 3, gl.FLOAT, false, 0, 0)
+            gl.enableVertexAttribArray(coord)
+
+            gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_SHORT, 0)
+
+            // 
+            gl.bindBuffer(gl.ARRAY_BUFFER, null)
+            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null)
+        }
+
+        function drawScene() {
+            // 清除颜色，并设置基础颜色为黑色
+            gl.clearColor(0, 0, 0, 1)
+
+            gl.enable(gl.DEPTH_TEST)
+            gl.clear(gl.COLOR_BUFFER_BIT)
+            gl.viewport(0, 0, canvas.width, canvas.height)
+
+            drawOne()
+
+
+            // console.log("draw every frame")
+            requestAnimationFrame(drawScene)
+        }
+
+        initBuffer()
+        initShader()
+        drawScene()
+
+    </script>
+</body>
+
+</html>
