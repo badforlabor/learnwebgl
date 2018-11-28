@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="utf-8">
-    <title>一个三角形</title>
+    <title>各种图形</title>
 </head>
 
 <body>
@@ -11,21 +11,6 @@
 
     <script>
 
-        /*
-            绘制元素，其实就一步：告诉GPU，在哪里绘制元素（比如三角形）以及使用哪种管线绘制（操纵shader），然后GPU就会把元素绘制出来。
-            如果要细分绘制步骤，总共这几步：
-                1、准备元素：initBuffer
-                2、准备shader：initShader
-                3、绘制：drawScene
-            drawscene的过程可以简化为几个步骤：
-                1、清屏：比如，清除颜色，清除深度缓冲区等等
-                2、绘制元素（比如 gl.useProgram ... gl.drawElements）
-                    2-1、元素是啥？就是顶点数组。顶点数组需要提前发送给GPU，使用gl.bufferData函数
-                    2-2、绘制元素的时候，需要告知GPU元素的位置，也就是句柄(或者指针)，使用gl.createBuffer函数。所以正确流程是
-                            先获取句柄gl.CreateBuffer，然后再设置数据gl.bindBuffer, gl.bufferData
-                3、如果有多个元素，重复执行步骤2。（具体可以参考lession2）
-                
-        */
         var canvas = document.getElementById('canvas');
         var gl = canvas.getContext('webgl');
 
@@ -34,24 +19,21 @@
 
 
         function initBuffer() {
-            // uv坐标其实是[-1, 1]，（绘制到屏幕时，不是以像素为距离单位的，而是uv，uv的范围是[-1, 1]。具体为啥，可以查查资料
+            // uv坐标其实是[-1, 1]，（3D世界中，不是以像素为距离单位的，而是uv，uv的范围是[-1, 1]。具体为啥，可以查查资料
             // 这里，我们居中绘制一个三角形
             let vertices = [
-                -0.5, 0.5, 0.0,
-                -0.5, -0.5, 0.0,
-                0.5, -0.5, 0.0,
+                -0.7, -0.1, 0,
+                -0.3, 0.6, 0,
+                -0.3, -0.3, 0,
+                0.2, 0.6, 0,
+                0.3, -0.3, 0,
+                0.7, 0.6, 0
             ]
 
             vertexBuffer = gl.createBuffer()
             gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer)
             gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW)
             gl.bindBuffer(gl.ARRAY_BUFFER, null)
-
-            indices = [0, 1, 2]
-            indexBuffer = gl.createBuffer()
-            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer)
-            gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW)
-            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null)
         }
         function initShader() {
             let compileShader = (src, type) => {
@@ -87,14 +69,21 @@
             gl.vertexAttribPointer(coord, 3, gl.FLOAT, false, 0, 0)
             gl.enableVertexAttribArray(coord)
 
-            if (true) {
-                // 绘制索引
-                gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer)
-                gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_SHORT, 0)
-            } else {
-                // 绘制顶点
-                gl.drawArrays(gl.TRIANGLES, 0, 3)
+            // 绘制顶点
+            var modes = [gl.LINES, gl.LINE_STRIP, gl.LINE_LOOP, gl.TRIANGLE_STRIP, gl.TRIANGLE_FAN, gl.TRIANGLES]
+            var now = Date.now() / 1000
+            if (!this.idx) {
+                this.idx = 0
             }
+            if (!this.time) {
+                this.time = now
+            }
+            if (now - this.time > 1) {
+                this.time = now;
+                this.idx++
+                this.idx = this.idx % modes.length
+            }
+            gl.drawArrays(modes[this.idx], 0, 6)
 
             // 
             gl.bindBuffer(gl.ARRAY_BUFFER, null)

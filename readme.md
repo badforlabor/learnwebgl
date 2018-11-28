@@ -8,5 +8,5 @@ https://developer.mozilla.org/zh-CN/docs/Web/API/WebGLRenderingContext
 
 
 ### 入门
-渲染一个三角形 [lession1](./lession1/index.html)
-渲染多个三角形 [lession2](./lession1/index.html)
+- 渲染一个三角形 [lession1](./lession1/index.html)
+- 渲染多个三角形 [lession2](./lession1/index.html)
