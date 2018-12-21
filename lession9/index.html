@@ -1,0 +1,90 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>透视投影</title>
+
+    <style>
+        #canvas {
+            width: 400px;
+            height: 600px;
+        }
+    </style>
+    <link rel="stylesheet" type="text/css" href="../resources/webgl-tutorials.css">
+</head>
+
+<body>
+
+    <script src="../resources/twgl-full.min.js"></script>
+    <script src="../resources/webgl-utils.js"></script>
+    <script src="../resources/webgl-lessons-ui.js"></script>
+    <script src="../resources/webgl-lessons-helper.js"></script>
+
+    <div class="description">
+        Drag sliders to change the frustum.
+    </div>
+    <div style="position:absolute;">
+        <canvas id="canvas"></canvas>
+        <img id="eye" src="../resources/eye-icon.png" style="position: absolute; z-index:2; left: 10px; top: 275px; width: 32px; height: auto;" />
+    </div>
+    <div id="uiContainer">
+        <div id="ui">
+            <div id="fieldOfView"></div>
+            <div id="zNear"></div>
+            <div id="zFar"></div>
+            <div id="zPosition"></div>
+        </div>
+    </div>
+</body>
+<script id="vertexColorVertexShader" type="text/something-not-javascript">
+    attribute vec4 position;
+    attribute vec4 color;
+    uniform mat4 u_worldViewProjection;
+    varying vec4 v_color;
+    void main() {
+      gl_Position = u_worldViewProjection * position;
+      v_color = color;
+    }
+    
+    </script>
+<script id="vertexColorFragmentShader" type="text/something-not-javascript">
+    precision mediump float;
+    uniform vec4 u_color;
+    varying vec4 v_color;
+    void main() {
+      gl_FragColor = u_color * v_color;
+    }
+    </script>
+<script id="baseVertexShader" type="text/something-not-javascript">
+    attribute vec4 position;
+    attribute vec4 color;
+    uniform mat4 u_worldViewProjection;
+    uniform mat4 u_exampleWorldViewProjection;
+    varying vec4 v_color;
+    varying vec4 v_position;
+    void main() {
+      gl_Position = u_worldViewProjection * position;
+      v_position = u_exampleWorldViewProjection * position;
+      v_position = v_position / v_position.w;
+      v_color = color;
+    }
+    
+    </script>
+<script id="colorFragmentShader" type="text/something-not-javascript">
+    precision mediump float;
+    varying vec4 v_color;
+    varying vec4 v_position;
+    uniform vec4 u_color;
+    void main() {
+      bool blend = (v_position.x < -1.0 || v_position.x > 1.0 ||
+                    v_position.y < -1.0 || v_position.y > 1.0 ||
+                    v_position.z < -1.0 || v_position.z > 1.0);
+      vec4 blendColor = blend ? vec4(0.35, 0.35, 0.35, 1.0) : vec4(1, 1, 1, 1);
+      gl_FragColor = v_color * u_color * blendColor;
+    }
+    </script>
+
+<script src="./main1.js"></script>
+
+</html>
